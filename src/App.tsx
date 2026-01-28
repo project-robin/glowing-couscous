@@ -119,7 +119,7 @@ function LoadingScreen() {
 function App() {
   const { status, isLoading, isAuthenticated, token, error } = useAstroAuth();
   const [api, setApi] = useState<AstroShivaAPI | null>(null);
-  const [bypassOnboarding, setBypassOnboarding] = useState(false);
+  const [bypassOnboarding] = useState(false)[0];
   const [bypassChat, setBypassChat] = useState(false);
 
   useEffect(() => {
