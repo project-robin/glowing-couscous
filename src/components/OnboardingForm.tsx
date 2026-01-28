@@ -65,9 +65,8 @@ export function OnboardingForm({ api, onSuccess }: Props) {
         setError(result.error?.message || 'Onboarding failed');
       }
     } catch (err) {
-      // For demo/testing purposes, still call onSuccess to proceed to chat
-      console.log('Onboarding error (expected due to CORS):', err);
-      onSuccess();
+      console.error('Onboarding error:', err);
+      setError('Failed to submit onboarding data. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
