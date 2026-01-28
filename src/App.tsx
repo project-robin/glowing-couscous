@@ -8,6 +8,7 @@ import { OnboardingForm } from './components/OnboardingForm';
 import { ChatInterface } from './components/ChatInterface';
 import { StarBackground } from './components/StarBackground';
 import { GlassCard } from './components/GlassCard';
+import { ConnectionStatus } from './components/ConnectionStatus';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Moon, Stars, Lock } from 'lucide-react';
 
@@ -170,6 +171,7 @@ export default function RootApp() {
   return (
     <ConvexProviderWithAuth client={convex} useAuth={useAuth}>
       <App />
+      <ConnectionStatus />
     </ConvexProviderWithAuth>
   );
 }
