@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
-import { ConvexProviderWithAuth } from 'convex/react';
-import { convex } from './convex';
-import { useAuth } from './convexAuth';
 import { useAstroAuth } from './hooks/useAstroAuth';
 import { AstroShivaAPI } from './services/astroApi';
 import { OnboardingForm } from './components/OnboardingForm';
 import { ChatInterface } from './components/ChatInterface';
 import { StarBackground } from './components/StarBackground';
 import { GlassCard } from './components/GlassCard';
-import { ConnectionStatus } from './components/ConnectionStatus';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Moon, Stars, Lock } from 'lucide-react';
 
@@ -171,10 +167,5 @@ function App() {
 }
 
 export default function RootApp() {
-  return (
-    <ConvexProviderWithAuth client={convex} useAuth={useAuth}>
-      <App />
-      <ConnectionStatus />
-    </ConvexProviderWithAuth>
-  );
+  return <App />;
 }
