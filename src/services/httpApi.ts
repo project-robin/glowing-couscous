@@ -213,6 +213,7 @@ class HttpClient {
     // Add auth token if available
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
+      headers['X-Guest-ID'] = this.token; // Send token as guest ID for backend auth
     }
 
     const retries = config.retries ?? DEFAULT_RETRIES;

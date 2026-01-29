@@ -14,7 +14,10 @@ import { Sparkles, Moon, Stars, Lock } from 'lucide-react';
 
 function AuthScreen() {
   const handleSignIn = () => {
-    localStorage.setItem('convexAuthToken', 'demo-token-for-testing');
+    // Generate unique guest ID for authentication
+    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('astroGuestId', guestId);
+    localStorage.setItem('convexAuthToken', guestId); // For backward compatibility
     window.location.reload();
   };
 
