@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Sparkles, User, Calendar, Clock, MapPin, Compass, Loader2 } from 'lucide-react';
+import { Sparkles, User, Calendar, Clock, MapPin, Compass, Loader2, Globe } from 'lucide-react';
 
 interface Props {
   api: AstroShivaAPI;
@@ -205,6 +205,24 @@ export function OnboardingForm({ api, onSuccess }: Props) {
                     className="mystic-input h-10 text-foreground placeholder:text-muted-foreground/50"
                   />
                 </div>
+              </div>
+              {/* Timezone Field */}
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="timezone" className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-mystic-gold" />
+                  Timezone
+                </Label>
+                <Input
+                  id="timezone"
+                  type="text"
+                  value={formData.timezone || ''}
+                  onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
+                  placeholder="e.g., America/New_York or UTC+5:30"
+                  className="mystic-input h-10 text-foreground placeholder:text-muted-foreground/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Defaults to your browser timezone. Use IANA format (e.g., Asia/Calcutta) or UTC offset.
+                </p>
               </div>
             </div>
 
