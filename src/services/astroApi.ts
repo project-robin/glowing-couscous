@@ -49,7 +49,11 @@ export class AstroShivaAPI {
   }>> {
     const response = await fetch(`${API_URL}/chat/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+        'X-Guest-ID': this.token || ''
+      },
       body: JSON.stringify({ message, sessionId })
     });
     return response.json();
@@ -57,7 +61,10 @@ export class AstroShivaAPI {
 
   async getProfile(): Promise<ApiResponse<any>> {
     const response = await fetch(`${API_URL}/users/profile`, {
-      headers: { 'Authorization': `Bearer ${this.token}` }
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'X-Guest-ID': this.token || ''
+      }
     });
     return response.json();
   }

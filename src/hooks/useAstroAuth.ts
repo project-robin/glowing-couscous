@@ -31,10 +31,17 @@ export const useAstroAuth = () => {
           headers: { Authorization: `Bearer ${authToken}` }
         });
 
-        if (res.status === 404) {
-          setStatus('onboarding');
-        } else if (res.ok) {
-          setStatus('ready');
+        if (res.ok) {
+          const data = await res.json();
+          // Check the status field in the response to determine onboarding state
+          if (data.data?.status === 'processing') {
+            setStatus('onboarding');
+          } else if (data.data?.status === 'completed') {
+            setStatus('ready');
+          } else {
+            // Default to onboarding if status is unclear
+            setStatus('onboarding');
+          }
         } else if (res.status === 401) {
           setError('Authentication failed. Please sign in again.');
           setStatus('loading');
