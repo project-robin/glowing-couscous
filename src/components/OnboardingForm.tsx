@@ -12,6 +12,8 @@ interface Props {
   onSuccess: () => void;
 }
 
+type LoadingState = 'idle' | 'submitting' | 'calculating' | 'waking-server' | 'storing';
+
 export function OnboardingForm({ api, onSuccess }: Props) {
   const [formData, setFormData] = useState<OnboardingData>({
     name: '',
@@ -20,13 +22,17 @@ export function OnboardingForm({ api, onSuccess }: Props) {
     place: '',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
   });
-  const [loading, setLoading] = useState(false);
+  const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [isRetryable, setIsRetryable] = useState(false);
+
+  const isLoading = loadingState !== 'idle';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setLoadingState('submitting');
     setError(null);
+    setIsRetryable(false);
 
     try {
       const formattedData = {
@@ -36,39 +42,53 @@ export function OnboardingForm({ api, onSuccess }: Props) {
           : ''
       };
 
+      // STEP 1: Submit to backend (blocking - waits for Python API + Convex storage)
+      setLoadingState('calculating');
       const result = await api.onboard(formattedData);
-      if (result.success) {
-        const maxAttempts = 30;
-        let attempts = 0;
-        let pollingComplete = false;
 
-        while (attempts < maxAttempts && !pollingComplete) {
-          attempts++;
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          try {
-            const profileResult = await api.getProfile();
-            if (profileResult.success && profileResult.data?.status === 'completed') {
-              pollingComplete = true;
-              onSuccess();
-              return;
-            }
-          } catch (pollError) {
-            console.error('Polling error:', pollError);
-          }
-        }
-
-        if (!pollingComplete) {
-          setError('Onboarding is taking longer than expected. Please refresh the page.');
+      if (result.success && result.data?.status === 'completed') {
+        // STEP 2: Verify data exists in Convex before transitioning
+        setLoadingState('storing');
+        
+        // Explicit verification that astrological data is stored
+        const verificationResult = await api.getProfile();
+        if (verificationResult.success && 
+            verificationResult.data?.status === 'completed' &&
+            verificationResult.data?.astroData) {
+          console.log('[Onboarding] Verification successful - astrological data confirmed in Convex');
+          setLoadingState('idle');
+          onSuccess();
+          return;
+        } else {
+          console.warn('[Onboarding] Verification failed - data may not be fully stored');
+          setError('Your birth chart was calculated but we\'re having trouble accessing it. Please try again.');
+          setIsRetryable(true);
+          setLoadingState('idle');
+          return;
         }
       } else {
-        setError(result.error?.message || 'Onboarding failed');
+        // Backend returned success: false
+        const errorMessage = result.error?.message || 'Onboarding failed';
+        const errorCode = result.error?.code;
+        
+        // Handle specific error types
+        if (errorCode === 'ASTRO_API_TIMEOUT') {
+          setError(errorMessage);
+          setIsRetryable(true);
+        } else if (errorCode === 'ASTRO_API_ERROR') {
+          setError(errorMessage);
+          setIsRetryable(result.error?.retryable || true);
+        } else {
+          setError(errorMessage);
+          setIsRetryable(false);
+        }
+        setLoadingState('idle');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Onboarding error:', err);
-      setError('Failed to submit onboarding data. Please check your connection and try again.');
-    } finally {
-      setLoading(false);
+      setError(err?.message || 'Failed to submit onboarding data. Please check your connection and try again.');
+      setIsRetryable(true);
+      setLoadingState('idle');
     }
   };
 
@@ -229,18 +249,20 @@ export function OnboardingForm({ api, onSuccess }: Props) {
             {/* Submit Button */}
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full mystic-button bg-gradient-to-r from-mystic-purple to-mystic-blue hover:from-mystic-purple-light hover:to-mystic-blue-light border border-mystic-gold/30 text-white font-display tracking-wider py-6 text-lg transition-all duration-300 hover:shadow-[0_0_30px_rgba(212,175,55,0.4)] disabled:opacity-50"
             >
-              {loading ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Calculating Your Chart...
+                  {loadingState === 'submitting' && 'Submitting...'}
+                  {loadingState === 'calculating' && 'Calculating Your Birth Chart...'}
+                  {loadingState === 'storing' && 'Storing Your Cosmic Data...'}
                 </>
               ) : (
                 <>
                   <Sparkles className="mr-2 h-5 w-5" />
-                  Complete Onboarding
+                  {isRetryable ? 'Try Again' : 'Complete Onboarding'}
                 </>
               )}
             </Button>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { AstroShivaAPI } from '../services/astroApi';
+import { AstroShivaAPI, UserProfile } from '../services/astroApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -15,6 +15,7 @@ import {
 
 interface Props {
   api: AstroShivaAPI;
+  userContext?: UserProfile | null;
 }
 
 interface Message {
@@ -23,11 +24,25 @@ interface Message {
   timestamp?: Date;
 }
 
-export function ChatInterface({ api }: Props) {
+export function ChatInterface({ api, userContext }: Props) {
+  // Generate personalized welcome message based on user's astrological data
+  const generateWelcomeMessage = (): string => {
+    if (!userContext?.astroData) {
+      return 'Welcome, seeker. I am your Vedic astrology guide. Ask me about your planetary positions, doshas, career path, relationships, or any aspect of your cosmic journey.';
+    }
+
+    const { summary, ascendant, moonSign } = userContext.astroData;
+    const name = userContext.name || 'Seeker';
+    
+    return `Welcome, ${name}! 🌟 I am your Vedic astrology guide. I've analyzed your birth chart and see you have ${ascendant || 'a powerful'} ascendant with ${moonSign || 'significant'} lunar influences. ${summary ? `Your chart reveals: ${summary}` : ''}
+
+Ask me about specific divisional charts (like D10 for career), planetary transits, dasha periods, or any aspect of your cosmic journey. I'm here to guide you with personalized insights based on your unique astrological blueprint.`;
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     { 
       role: 'assistant', 
-      content: 'Welcome, seeker. I am your Vedic astrology guide. Ask me about your planetary positions, doshas, career path, relationships, or any aspect of your cosmic journey.',
+      content: generateWelcomeMessage(),
       timestamp: new Date()
     }
   ]);

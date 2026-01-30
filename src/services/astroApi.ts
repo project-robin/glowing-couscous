@@ -21,7 +21,26 @@ export interface ApiResponse<T> {
   error?: {
     code: string;
     message: string;
+    details?: string;
+    retryable?: boolean;
   };
+  meta?: {
+    timestamp: string;
+  };
+}
+
+export interface UserProfile {
+  uid: string;
+  name: string;
+  status: 'onboarding' | 'processing' | 'completed' | 'failed';
+  astroData?: {
+    summary: string;
+    ascendant: string;
+    moonSign: string;
+    // Full birth chart data
+    chart?: any;
+  };
+  createdAt?: string;
 }
 
 export class AstroShivaAPI {
@@ -59,7 +78,7 @@ export class AstroShivaAPI {
     return response.json();
   }
 
-  async getProfile(): Promise<ApiResponse<any>> {
+  async getProfile(): Promise<ApiResponse<UserProfile>> {
     const response = await fetch(`${API_URL}/users/profile`, {
       headers: {
         'Authorization': `Bearer ${this.token}`,
@@ -67,5 +86,31 @@ export class AstroShivaAPI {
       }
     });
     return response.json();
+  }
+
+  /**
+   * Verify that astrological data exists and is complete
+   * Used before transitioning to chat interface
+   */
+  async verifyAstroData(): Promise<{ exists: boolean; data?: UserProfile }> {
+    try {
+      const profile = await this.getProfile();
+      
+      if (!profile.success || !profile.data) {
+        return { exists: false };
+      }
+
+      const userData = profile.data;
+      
+      // Check if user has completed onboarding and has astrological data
+      if (userData.status === 'completed' && userData.astroData) {
+        return { exists: true, data: userData };
+      }
+
+      return { exists: false };
+    } catch (error) {
+      console.error('[AstroShivaAPI] Error verifying astro data:', error);
+      return { exists: false };
+    }
   }
 }
